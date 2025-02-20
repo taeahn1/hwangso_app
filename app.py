@@ -513,6 +513,26 @@ def update_homework_goal(student_name):
     flash("숙제 목표 업데이트 완료!")
     return redirect(url_for('homework', student_name=student_name))
 
+@app.route('/confirm_homework_item', methods=['POST'])
+def confirm_homework_item():
+    item_id = request.form['item_id']
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE homework_items SET confirmed_by_teacher = 1 WHERE id = %s", (item_id,))
+    conn.commit()
+    conn.close()
+    return 'OK'
+
+@app.route('/unconfirm_homework_item', methods=['POST'])
+def unconfirm_homework_item():
+    item_id = request.form['item_id']
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE homework_items SET completed = 0, confirmed_by_teacher = 0 WHERE id = %s", (item_id,))
+    conn.commit()
+    conn.close()
+    return 'OK'
+
 #########################################
 # 학생 추가 라우트
 #########################################
