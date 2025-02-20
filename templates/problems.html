@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <!-- 모바일 반응형 뷰포트 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>문제 리스트</title>
+  <!-- Bootstrap CSS CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .filter-section {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 5px;
+    }
+    .group-header {
+      background-color: #f8f9fa;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    @media (max-width: 768px) {
+      table {
+         font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container my-4">
+  <!-- 상단 헤더: 학생 이름 표시 및 전체 편집 버튼 -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">문제 리스트 (학생: {{ student.name }})</h1>
+    <button id="toggleEditAll" class="btn btn-secondary">편집</button>
+  </div>
+  
+  <div class="table-responsive">
+    <table class="table table-bordered">
+      <thead class="table-light">
+        <tr>
+          <th>페이지 번호</th>
+          <th>문제 번호</th>
+          <th>대단원</th>
+          <th>소단원</th>
+          <th>X1</th>
+          <th>Star</th>
+          <th>X2</th>
+          <th>Insane</th>
+          <th>MakeTest</th>
+          <th>View Image</th>
+          <th>삭제</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set current_major = None %}
+        {% set current_minor = None %}
+        {% for prob in problems %}
+          {% if prob.major_section != current_major or prob.minor_section != current_minor %}
+            <tr class="group-header">
+              <td colspan="11">대단원: {{ prob.major_section or '미지정' }} / 소단원: {{ prob.minor_section or '미지정' }}</td>
+            </tr>
+            {% set current_major = prob.major_section %}
+            {% set current_minor = prob.minor_section %}
+          {% endif %}
+          <tr data-problem-id="{{ prob.id }}">
+            <!-- 페이지 번호 열 -->
+            <td>
+              <span class="display-page">{{ prob.page_number }}</span>
+              <input type="text" class="form-control form-control-sm edit-page d-none" value="{{ prob.page_number }}">
+            </td>
+            <!-- 문제 번호 열 -->
+            <td>
+              <span class="display-problem">{{ prob.problem_number }}</span>
+              <input type="text" class="form-control form-control-sm edit-problem d-none" value="{{ prob.problem_number }}">
+            </td>
+            <!-- 대단원 -->
+            <td>
+              <input type="text" class="form-control section-major" data-problem-id="{{ prob.id }}" value="{{ prob.major_section or '' }}">
+            </td>
+            <!-- 소단원 -->
+            <td>
+              <input type="text" class="form-control section-minor" data-problem-id="{{ prob.id }}" value="{{ prob.minor_section or '' }}">
+            </td>
+            <!-- 상태 체크박스들 -->
+            <td>
+              <input type="checkbox" data-problem-id="{{ prob.id }}" data-status-field="X1" {% if prob.status_X1 %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="checkbox" data-problem-id="{{ prob.id }}" data-status-field="Star" {% if prob.status_STAR %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="checkbox" data-problem-id="{{ prob.id }}" data-status-field="X2" {% if prob.status_X2 %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="checkbox" data-problem-id="{{ prob.id }}" data-status-field="Insane" {% if prob.status_INSANE %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="checkbox" data-problem-id="{{ prob.id }}" data-status-field="MakeTest" {% if prob.status_MakeTest %}checked{% endif %}>
+            </td>
+            <!-- 이미지 보기 및 삭제 -->
+            <td>
+              <a href="{{ url_for('problem_image', problem_id=prob.id) }}" class="btn btn-sm btn-info" target="_blank">View Image</a>
+            </td>
+            <td>
+              <a href="{{ url_for('delete_problem', problem_id=prob.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- 하단 필터 섹션: PDF 및 삭제 필터 -->
+  <div class="filter-section">
+    <h4 class="mb-3">PDF/삭제 필터 조건</h4>
+    <form id="pdfFilterForm" method="GET" action="{{ url_for('generate_pdf', student_id=student_id) }}">
+      <div class="row gy-2">
+        <div class="col-6 col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filterX1" name="x1" value="1">
+            <label class="form-check-label" for="filterX1">X1</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filterStar" name="star" value="1">
+            <label class="form-check-label" for="filterStar">Star</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filterX2" name="x2" value="1">
+            <label class="form-check-label" for="filterX2">X2</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filterInsane" name="insane" value="1">
+            <label class="form-check-label" for="filterInsane">Insane</label>
+          </div>
+        </div>
+        <div class="col-6 col-md-2">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="filterMakeTest" name="make_test" value="1">
+            <label class="form-check-label" for="filterMakeTest">MakeTest</label>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button type="submit" class="btn btn-success w-100">필터된 문제로 PDF 다운로드</button>
+        <button type="button" class="btn btn-danger w-100 mt-2" onclick="deleteFiltered()">필터된 문제 삭제</button>
+      </div>
+    </form>
+  </div>
+  
+  <div class="text-center mt-4">
+    <a href="{{ url_for('student_list') }}" class="btn btn-secondary">학생 목록으로 돌아가기</a>
+  </div>
+</div>
+
+<script>
+  // 문제별 체크박스 업데이트 (AJAX)
+  document.querySelectorAll('input[type=checkbox][data-problem-id]').forEach(chk => {
+    chk.addEventListener('change', function() {
+      var problemId = this.getAttribute('data-problem-id');
+      var statusField = this.getAttribute('data-status-field');
+      var value = this.checked ? 1 : 0;
+      fetch('/update_problem', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `problem_id=${problemId}&status_field=${statusField}&value=${value}`
+      }).then(response => response.text())
+        .then(data => console.log(data));
+    });
+  });
+
+  // 대단원, 소단원 업데이트 (AJAX)
+  function updateSection(problemId, field, value) {
+    fetch('/update_section', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `problem_id=${problemId}&field=${field}&value=${encodeURIComponent(value)}`
+    }).then(response => response.text())
+      .then(data => console.log(data));
+  }
+  document.querySelectorAll('.section-major').forEach(input => {
+    input.addEventListener('change', function() {
+      var problemId = this.getAttribute('data-problem-id');
+      updateSection(problemId, 'major_section', this.value);
+    });
+  });
+  document.querySelectorAll('.section-minor').forEach(input => {
+    input.addEventListener('change', function() {
+      var problemId = this.getAttribute('data-problem-id');
+      updateSection(problemId, 'minor_section', this.value);
+    });
+  });
+
+ // 전체 편집 모드 토글
+  var editMode = false;
+  document.getElementById('toggleEditAll').addEventListener('click', function() {
+    editMode = !editMode;
+    var toggleBtn = this;
+    // 모든 행에서 페이지번호와 문제번호 입력필드와 표시용 span을 가져옵니다.
+    document.querySelectorAll('tr[data-problem-id]').forEach(function(tr) {
+      var displayPage = tr.querySelector('.display-page');
+      var editPage = tr.querySelector('.edit-page');
+      var displayProblem = tr.querySelector('.display-problem');
+      var editProblem = tr.querySelector('.edit-problem');
+      if (editMode) {
+        // 편집 모드: 입력 필드 보이기, span 숨기기
+        editPage.classList.remove('d-none');
+        editProblem.classList.remove('d-none');
+        displayPage.classList.add('d-none');
+        displayProblem.classList.add('d-none');
+      } else {
+        // 완료 모드: 각 행의 값을 AJAX로 업데이트 후, 원래대로 복구
+        var newPage = editPage.value.trim();
+        var newProblem = editProblem.value.trim();
+        var problemId = tr.getAttribute('data-problem-id');
+        // AJAX 호출로 업데이트
+        fetch('/update_problem_details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `problem_id=${problemId}&page_number=${encodeURIComponent(newPage)}&problem_number=${encodeURIComponent(newProblem)}`
+        }).then(response => response.text())
+          .then(data => {
+            // 업데이트 완료 후, span 업데이트 및 입력 필드 숨김
+            displayPage.textContent = newPage;
+            displayProblem.textContent = newProblem;
+            editPage.classList.add('d-none');
+            editProblem.classList.add('d-none');
+            displayPage.classList.remove('d-none');
+            displayProblem.classList.remove('d-none');
+          }).catch(err => {
+            alert('업데이트 중 오류 발생');
+            console.error(err);
+          });
+      }
+    });
+    toggleBtn.textContent = editMode ? '완료' : '편집';
+  });
+  
+  // 필터된 문제 삭제 함수
+  function deleteFiltered() {
+    if(confirm("필터 조건에 맞는 모든 문제가 삭제됩니다. 계속하시겠습니까?")){
+      var form = document.getElementById('pdfFilterForm');
+      var actionUrl = form.getAttribute('action').replace('generate_pdf', 'delete_filtered');
+      window.location.href = actionUrl + "?" + new URLSearchParams(new FormData(form)).toString();
+    }
+  }
+</script>
+</body>
+</html>

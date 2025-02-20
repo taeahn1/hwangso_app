@@ -1,0 +1,14 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/apt-impact-324218/hwangsoai1.0', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/apt-impact-324218/hwangsoai1.0']
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'gcloud'
+  args: ['run', 'deploy', 'math-ai',
+         '--image', 'gcr.io/apt-impact-324218/hwangsoai1.0',
+         '--region', 'asia-northeast3',
+         '--platform', 'managed',
+         '--allow-unauthenticated']
+images:
+- 'gcr.io/apt-impact-324218/hwangsoai1.0'
